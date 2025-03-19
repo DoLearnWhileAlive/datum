@@ -52,6 +52,29 @@ Describe "RSOP tests based on 'MergeTestData' test data" {
                 PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet"}.DisableNetbios'
                 Value        = ''
             }
+
+            @{
+                Node         = 'DSCWeb01'
+                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet"}.Gateway'
+                Value        = ''
+            }
+            @{
+                Node         = 'DSCWeb02'
+                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet"}.Gateway'
+                Value        = '192.168.20.50'
+            }
+
+            @{
+                Node         = 'DSCWeb01'
+                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet2"}.InterfaceAlias'
+                Value        = ''
+            }
+            @{
+                Node         = 'DSCWeb02'
+                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet2"}.InterfaceAlias'
+                Value        = 'Ethernet2'
+            }
+
             @{
                 Node         = 'DSCWeb01'
                 PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet"}.Destination'

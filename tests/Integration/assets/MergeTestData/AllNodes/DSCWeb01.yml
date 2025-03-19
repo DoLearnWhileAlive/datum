@@ -17,6 +17,7 @@ NetworkIpConfigurationMerged:
         - --192.168.20.0/24
         - --192.168.30.0/24
         - 192.168.70.0/24
+    - --InterfaceAlias: Ethernet2
 
 WindowsFeatures:
   Name:

@@ -23,6 +23,14 @@ NetworkIpConfigurationMerged:
         - 192.168.50.0/24
         - 192.168.60.0/24
         - 192.168.70.0/24
+    - InterfaceAlias: Ethernet2
+      Prefix: 24
+      Gateway: 192.168.20.50
+      DnsServer: 192.168.20.10
+      DisableNetbios: True
+      Destination:
+        - 192.168.10.0/24
+        - 192.168.20.0/24
 
 SecurityBase:
   Role: Baseline
