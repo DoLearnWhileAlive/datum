@@ -52,11 +52,11 @@ Describe "RSOP tests based on 'MergeTestData' test data" {
                 PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet"}.DisableNetbios'
                 Value        = ''
             }
-            #@{
-            #    Node         = 'DSCWeb01'
-            #    PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet"}.Destination'
-            #    Value        = '192.168.12.0/24', '192.168.23.0/24', '192.168.34.0/24', '192.168.10.0/24', '192.168.20.0/24', '192.168.30.0/24', '192.168.40.0/24', '192.168.50.0/24', '192.168.60.0/24'
-            #}
+            @{
+                Node         = 'DSCWeb01'
+                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet"}.Destination'
+                Value        = '192.168.12.0/24', '192.168.23.0/24', '192.168.34.0/24', '192.168.40.0/24', '192.168.50.0/24', '192.168.60.0/24', '192.168.70.0/24'
+            }
             @{
                 Node         = 'DSCWeb02'
                 PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet"}.Destination'

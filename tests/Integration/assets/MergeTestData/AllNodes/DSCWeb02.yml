@@ -16,6 +16,7 @@ NetworkIpConfigurationMerged:
   Interfaces:
     - InterfaceAlias: Ethernet
       IpAddress: 192.168.10.102
+      DisableNetBios: false
 
 NetworkIpConfigurationNonMerged:
   Interfaces:
