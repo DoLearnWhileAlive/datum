@@ -31,7 +31,7 @@ Describe 'Merge ' {
             @{
                 Node         = 'DSCWeb01'
                 PropertyPath = 'NetworkIpConfigurationMerged\Interfaces\Destination'
-                Count        = 6
+                Count        = 7
             }
             @{
                 Node         = 'DSCWeb02'
@@ -103,7 +103,7 @@ Describe 'Merge ' {
             @{
                 Node         = 'DSCWeb01'
                 PropertyPath = 'NetworkIpConfigurationMerged\Interfaces\Destination'
-                Value        = '192.168.12.0/24', '192.168.23.0/24', '192.168.34.0/24', '192.168.40.0/24', '192.168.50.0/24', '192.168.60.0/24'
+                Value        = '192.168.12.0/24', '192.168.23.0/24', '192.168.34.0/24', '192.168.40.0/24', '192.168.50.0/24', '192.168.60.0/24', '192.168.70.0/24'
             }
             @{
                 Node         = 'DSCWeb02'
