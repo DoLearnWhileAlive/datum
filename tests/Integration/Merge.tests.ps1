@@ -213,6 +213,12 @@ Describe 'Merge ' {
                 Value         = 'DisableNetBios'
                 ExpectedValue = $null
             }
+            #@{
+            #    Node          = 'DSCWeb02'
+            #    PropertyPath  = 'NetworkIpConfigurationMerged'
+            #    Value         = 'DisableNetBios'
+            #    ExpectedValue = $null
+            #}
             @{
                 Node          = 'DSCWeb02'
                 PropertyPath  = 'NetworkIpConfigurationMerged'

@@ -10,14 +10,12 @@ NetworkIpConfigurationMerged:
   DisableNetBios: false
   Interfaces:
     - InterfaceAlias: Ethernet
-      Prefix: 24
-      Gateway: 192.168.20.50
-      DnsServer: 192.168.20.10
-      DisableNetbios: True
+      --DisableNetbios:
       Destination:
         - 192.168.12.0/24
         - 192.168.23.0/24
         - 192.168.34.0/24
+        - --192.168.70.0/24
 
 NetworkIpConfigurationNonMerged:
   ConfigureIPv6: -1
