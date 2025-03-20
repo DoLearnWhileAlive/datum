@@ -129,20 +129,7 @@ function Merge-Datum
 
                 '^Unique'
                 {
-                    if ($knockoutPrefixMatcher = $strategy.merge_options.knockout_prefix)
-                    {
-                        $knockoutPrefixMatcher = $knockoutPrefixMatcher.insert(0, '^')
-                        $knockedOutItems = foreach ($item in ($ReferenceDatum.Where{ $_ -match $knockoutPrefixMatcher }))
-                        {
-                            $item -replace $knockoutPrefixMatcher
-                        }
-                        return (, (($ReferenceDatum + $DifferenceDatum).Where{ $_ -notin $knockedOutItems } | Select-Object -Unique))
-                    }
-                    else
-                    {
-                        return (, (($ReferenceDatum + $DifferenceDatum) | Select-Object -Unique))
-                    }
-
+                    return (, (($ReferenceDatum + $DifferenceDatum) | Select-Object -Unique))
                 }
 
                 '^Sum|^Add'
@@ -150,7 +137,7 @@ function Merge-Datum
                     #--> $ref + $diff -$kop
                     if ($knockoutPrefixMatcher = $strategy.merge_options.knockout_prefix)
                     {
-                        $knockoutPrefixMatcher = $knockoutPrefixMatcher.insert(0, '^')
+                        $knockoutPrefixMatcher = $knockoutPrefixMatcher.Insert(0, '^')
                         $knockedOutItems = foreach ($item in ($ReferenceDatum.Where{ $_ -match $knockoutPrefixMatcher }))
                         {
                             $item -replace $knockoutPrefixMatcher
