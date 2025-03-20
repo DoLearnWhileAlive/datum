@@ -49,8 +49,36 @@ Describe "RSOP tests based on 'MergeTestData' test data" {
             }
             @{
                 Node         = 'DSCWeb01'
+                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet"}.DisableNetbios'
+                Value        = ''
+            }
+
+            @{
+                Node         = 'DSCWeb01'
+                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet"}.Gateway'
+                Value        = ''
+            }
+            @{
+                Node         = 'DSCWeb02'
+                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet"}.Gateway'
+                Value        = '192.168.20.50'
+            }
+
+            @{
+                Node         = 'DSCWeb01'
+                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet2"}.InterfaceAlias'
+                Value        = ''
+            }
+            @{
+                Node         = 'DSCWeb02'
+                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet2"}.InterfaceAlias'
+                Value        = 'Ethernet2'
+            }
+
+            @{
+                Node         = 'DSCWeb01'
                 PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet"}.Destination'
-                Value        = '192.168.12.0/24', '192.168.23.0/24', '192.168.34.0/24', '192.168.40.0/24', '192.168.50.0/24', '192.168.60.0/24'
+                Value        = '192.168.12.0/24', '192.168.23.0/24', '192.168.34.0/24', '192.168.40.0/24', '192.168.50.0/24', '192.168.60.0/24', '192.168.70.0/24'
             }
             @{
                 Node         = 'DSCWeb02'
@@ -86,7 +114,15 @@ Describe "RSOP tests based on 'MergeTestData' test data" {
             $rsopWithSource | ConvertTo-Yaml | Out-File -FilePath $nodeRsopWithSourcePath
 
             $cmd = [scriptblock]::Create("`$rsop.$PropertyPath")
-            & $cmd | Sort-Object | Should -Be ($Value | Sort-Object)
+
+            if ([string]::IsNullOrEmpty($Value))
+            {
+                & $cmd | Sort-Object | Should -BeNullOrEmpty
+            }
+            else
+            {
+                & $cmd | Sort-Object | Should -Be ($Value | Sort-Object)
+            }
         }
     }
 
