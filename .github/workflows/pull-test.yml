@@ -1,0 +1,35 @@
+name: test
+
+on: push
+
+jobs:
+  pwsh-ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: pack
+        shell: pwsh
+        run: ./build.ps1 -Tasks pack -ResolveDependency
+      - name: test
+        shell: pwsh
+        run: ./build.ps1 -Tasks test
+  pwsh-win:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: pack
+        shell: pwsh
+        run: ./build.ps1 -Tasks pack -ResolveDependency
+      - name: test
+        shell: pwsh
+        run: ./build.ps1 -Tasks test
+  powershell-win:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: pack
+        shell: powershell
+        run: ./build.ps1 -Tasks pack -ResolveDependency
+      - name: test
+        shell: powershell
+        run: ./build.ps1 -Tasks test
