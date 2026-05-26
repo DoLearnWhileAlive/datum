@@ -1,6 +1,6 @@
 function Merge-DatumArray
 {
-    [OutputType([System.Collections.ArrayList])]
+    [OutputType([System.Collections.Generic.List[object]])]
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)]
@@ -29,253 +29,255 @@ function Merge-DatumArray
     Write-Debug -Message "`tMerge-DatumArray -StartingPath <$StartingPath>"
     $hashArrayStrategy = $Strategy.merge_hash_array
     Write-Debug -Message "`t`tHash Array Strategy: $hashArrayStrategy"
-    $mergeBasetypeArraysStrategy = $Strategy.merge_basetype_array
-    $mergedArray = [System.Collections.ArrayList]::new()
 
-    $sortParams = @{}
-    if ($propertyNames = [string[]]$Strategy.merge_options.tuple_keys)
+    $tupleKeys = if ($Strategy.merge_options.tuple_keys)
     {
-        $sortParams.Add('Property', $propertyNames)
+        [string[]]$Strategy.merge_options.tuple_keys
+    }
+    else
+    {
+        @()
     }
 
-    if ($ReferenceArray -as [hashtable[]])
-    {
-        Write-Debug -Message "`t`tMERGING Array of Hashtables"
-        if (-not $hashArrayStrategy -or $hashArrayStrategy -match 'MostSpecific')
-        {
-            Write-Debug -Message "`t`tMerge_hash_arrays Disabled. value: $hashArrayStrategy"
-            $mergedArray = $ReferenceArray
-            if ($Strategy.sort_merged_arrays)
-            {
-                $mergedArray = $mergedArray | Sort-Object @sortParams
-            }
-            return $mergedArray
-        }
+    $mergedArray = [System.Collections.Generic.List[object]]::new()
 
-        $knockedOutTupleKeyValues = [System.Collections.ArrayList]@()
+    # Early exit if not an array of hashtables
+    if (-not $ReferenceArray -as [hashtable[]])
+    {
+        return , $mergedArray
+    }
+
+    # MostSpecific strategy: return reference array as-is (with optional sorting)
+    if (-not $hashArrayStrategy -or $hashArrayStrategy -match 'MostSpecific')
+    {
+        Write-Debug -Message "`t`tMerge_hash_arrays Disabled. value: $hashArrayStrategy"
+        if ($Strategy.sort_merged_arrays -and $tupleKeys.Count -gt 0)
+        {
+            $ReferenceArray = $ReferenceArray | Sort-Object -Property $tupleKeys
+        }
+        return , $ReferenceArray
+    }
+
+    Write-Debug -Message "`t`tMERGING Array of Hashtables"
+
+    # Precompute knockout regex for identifying knockout-prefixed values
+    $knockoutPrefixMatcher = if ($Strategy.merge_options.knockout_prefix)
+    {
+        '^' + [regex]::Escape($Strategy.merge_options.knockout_prefix)
+    }
+    else
+    {
+        $null
+    }
+
+    $result = $null
+
+    # Precompute list of knockout reference items
+    # Stores only properties with knockout values to efficiently check during merge
+    $knockoutReferenceItems = @(
         foreach ($referenceItem in $ReferenceArray)
         {
-            $currentRefItem = [ordered]@{} + $referenceItem
-
-            # make sure property values are converted before merge
-            $result = $null
-            foreach ($prop in $propertyNames.Where{ $currentRefItem.Contains($_) })
+            $knockoutItem = @{}
+            foreach ($prop in $tupleKeys)
             {
-                if (Invoke-DatumHandler -InputObject $currentRefItem[$prop] -DatumHandlers $Datum.__Definition.DatumHandlers -Result ([ref]$result))
+                if ($referenceItem.Contains($prop))
                 {
-                    $currentRefItem[$prop] = ConvertTo-Datum -InputObject $result -DatumHandlers $Datum.__Definition.DatumHandlers
+                    # Make sure property values are converted before comparing
+                    if (Invoke-DatumHandler -InputObject $referenceItem[$prop] -DatumHandlers $Datum.__Definition.DatumHandlers -Result ([ref]$result))
+                    {
+                        $referenceItem[$prop] = ConvertTo-Datum -InputObject $result -DatumHandlers $Datum.__Definition.DatumHandlers
+                    }
+
+                    if ($knockoutPrefixMatcher)
+                    {
+                        if ($referenceItem[$prop] -match $knockoutPrefixMatcher)
+                        {
+                            $knockoutItem[$prop] = $referenceItem[$prop]
+                        }
+                    }
+                }
+                if ($knockoutItem.Count -gt 0)
+                {
+                    $knockoutItem
+                }
+            }
+        }
+    )
+
+    switch -Regex ($hashArrayStrategy)
+    {
+        # Sum/Add strategy: combine all items from both arrays
+        '^Sum|^Add'
+        {
+            foreach ($referenceItem in $ReferenceArray)
+            {
+                $mergedArray.Add($referenceItem)
+            }
+            foreach ($differenceItem in $DifferenceArray)
+            {
+                $mergedArray.Add($differenceItem)
+            }
+        }
+
+        # Deep/Merge strategy: merge items with matching tuple keys
+        '^Deep|^Merge'
+        {
+            Write-Debug -Message "`t`t`tStrategy for Array Items: Merge Hash By tuple`r`n"
+
+            # Build differenceItem index hashtable for O(1) lookups
+            # Key = composite tuple key string, Value = the difference item
+            $diffIndex = @{}
+            foreach ($differenceItem in $DifferenceArray)
+            {
+                # Make sure property values are converted before comparing
+                foreach ($prop in $tupleKeys)
+                {
+                    if ($differenceItem.Contains($prop))
+                    {
+                        if (Invoke-DatumHandler -InputObject $differenceItem[$prop] -DatumHandlers $Datum.__Definition.DatumHandlers -Result ([ref]$result))
+                        {
+                            $differenceItem[$prop] = ConvertTo-Datum -InputObject $result -DatumHandlers $Datum.__Definition.DatumHandlers
+                        }
+                    }
+                }
+                $key = Get-DatumTupleKeyValueString $differenceItem $tupleKeys
+                $diffIndex[$key] = $differenceItem
+            }
+
+            # Track which difference keys have been used for merging
+            $usedDiffKeys = @{}
+
+            # Process reference items: merge with matching difference items or keep as-is
+            foreach ($referenceItem in $ReferenceArray)
+            {
+                # Determine which keys to use for comparison
+                $compareKeys = if ($tupleKeys.Count -gt 0)
+                {
+                    $tupleKeys
+                }
+                else
+                {
+                    Write-Debug -Message "`t`t`t ..No PropertyName defined: Use ReferenceItem Keys"
+                    $referenceItem.Keys
+                }
+                $key = Get-DatumTupleKeyValueString $referenceItem $compareKeys
+
+                if ($diffIndex.ContainsKey($key))
+                {
+                    # Match found - merge the items
+                    $usedDiffKeys[$key] = $true
+                    $paramsMergeHt = @{
+                        ParentPath          = $StartingPath
+                        Strategy            = $Strategy
+                        ReferenceHashtable  = $referenceItem
+                        DifferenceHashtable = $diffIndex[$key]
+                        ChildStrategies     = $ChildStrategies
+                    }
+                    $mergedArray.Add((Merge-Hashtable @paramsMergeHt))
+                }
+                else
+                {
+                    # No match - keep reference item as-is
+                    $mergedArray.Add($referenceItem)
                 }
             }
 
-            if ($knockoutPrefixMatcher = $Strategy.merge_options.knockout_prefix)
+            # Process remaining difference items that weren't merged
+            foreach ($differenceItem in $DifferenceArray)
             {
-                $knockoutPrefixMatcher = [regex]::Escape($Strategy.merge_options.knockout_prefix).Insert(0, '^')
-
-                if ($tupleKeyNames = [string[]]$strategy.merge_options.tuple_keys)
+                # Check if this item should be knocked out
+                $shouldKnockout = $false
+                foreach ($knockoutReferenceItem in $knockoutReferenceItems)
                 {
-                    if ($currentRefItemKeysWithKnockOutValues = $currentRefItem.Keys.Where{ $_ -in $tupleKeyNames -and $currentRefItem[$_] -match $knockoutPrefixMatcher })
+                    if (Test-DatumKnockout -DiffItem $differenceItem -RefKnockoutItem $knockoutReferenceItem -KnockoutPrefixMatcher $knockoutPrefixMatcher)
                     {
-                        $ht = @{}
-                        foreach ($key in $currentRefItemKeysWithKnockOutValues)
-                        {
-                            $ht.$key = $currentRefItem.$key -replace $knockoutPrefixMatcher
-                        }
-
-                        $null = $knockedOutTupleKeyValues.Add($ht)
+                        $shouldKnockout = $true
+                        break
                     }
+                }
+                if ($shouldKnockout)
+                {
+                    continue
+                }
+
+                $key = Get-DatumTupleKeyValueString $differenceItem $tupleKeys
+                # Only add if not already merged with a reference item
+                if (-not $usedDiffKeys.ContainsKey($key))
+                {
+                    $mergedArray.Add($differenceItem)
                 }
             }
         }
 
-        switch -Regex ($hashArrayStrategy)
+        # Unique strategy: keep only unique items across both arrays based on tuple keys
+        '^Unique'
         {
-            '^Sum|^Add'
+            Write-Debug -Message "`t`t`tSelecting Unique Hashes accross both arrays based on Property tuples"
+
+            # Track seen keys to ensure uniqueness
+            $seenKeys = @{}
+
+            # Process reference items first
+            foreach ($referenceItem in $ReferenceArray)
             {
-                foreach ($referenceItem in $ReferenceArray)
+                # Determine which keys to use for comparison
+                $compareKeys = if ($tupleKeys.Count -gt 0)
                 {
-                    $null = $mergedArray.Add(([ordered]@{} + $referenceItem))
+                    $tupleKeys
                 }
-                foreach ($differenceItem in $DifferenceArray)
-                {
-                    $null = $mergedArray.Add(([ordered]@{} + $differenceItem))
-                }
-            }
-
-            # MergeHashesByProperties
-            '^Deep|^Merge'
-            {
-                Write-Debug -Message "`t`t`tStrategy for Array Items: Merge Hash By tuple`r`n"
-                # look at each $RefItems in $RefArray
-                #   if no PropertyNames defined, use all Properties of $RefItem
-                #   else use defined propertyNames
-                #  Search for DiffItem that has the same Property/Value pairs
-                #    if found, Merge-Datum (or MergeHashtable?)
-                #    if not found, add $DiffItem to $RefArray
-
-                # look at each $RefItems in $RefArray
-                $usedOrKnockedOutDiffItems = [System.Collections.ArrayList]@()
-                foreach ($referenceItem in $ReferenceArray)
-                {
-                    $referenceItem = [ordered]@{} + $referenceItem
-                    Write-Debug -Message "`t`t`t  .. Working on Merged Element $($mergedArray.Count)`r`n"
-                    # if no PropertyNames defined, use all Properties of $RefItem
-                    if (-not $propertyNames)
-                    {
-                        Write-Debug -Message "`t`t`t ..No PropertyName defined: Use ReferenceItem Keys"
-                        $propertyNames = $referenceItem.Keys
-                    }
-                    $mergedItem = @{} + $referenceItem
-                    $diffItemsToMerge = $DifferenceArray.Where{
-                        $differenceItem = [ordered]@{} + $_
-                        # make sure property values are converted before merge
-                        $result = $null
-                        foreach ($prop in $propertyNames)
-                        {
-                            if ($differenceItem.Contains($prop))
-                            {
-                                if (Invoke-DatumHandler -InputObject $differenceItem.$prop -DatumHandlers $Datum.__Definition.DatumHandlers -Result ([ref]$result))
-                                {
-                                    $differenceItem.$prop = ConvertTo-Datum -InputObject $result -DatumHandlers $Datum.__Definition.DatumHandlers
-                                }
-                            }
-                        }
-                        $itemKnockedOut = $false
-                        foreach ($knockedOutTupleKeyValue in $knockedOutTupleKeyValues)
-                        {
-                            $filterStrings = foreach ($knockedOutTupleKeyValueKey in $knockedOutTupleKeyValue.Keys)
-                            {
-                                "`$knockedOutTupleKeyValue.'$knockedOutTupleKeyValueKey' -eq `$differenceItem.'$knockedOutTupleKeyValueKey'"
-                            }
-                            $filterScript = [scriptblock]::Create($filterStrings -join ' -and ')
-                            if ( &$filterScript )
-                            {
-                                $null = $usedOrKnockedOutDiffItems.Add($_)
-                                $itemKnockedOut = $true
-                                break
-                            }
-                        }
-                        if ($itemKnockedOut -eq $false)
-                        {
-                            # Search for DiffItem that has the same Property/Value pairs than RefItem
-                            $compareHashParams = @{
-                                ReferenceHashtable  = [ordered]@{} + $referenceItem
-                                DifferenceHashtable = $differenceItem
-                                Property            = $propertyNames
-                            }
-                            (-not (Compare-Hashtable @compareHashParams))
-                        }
-                    }
-                    Write-Debug -Message "`t`t`t ..Items to merge: $($diffItemsToMerge.Count)"
-                    $diffItemsToMerge | ForEach-Object {
-                        $mergeItemsParams = @{
-                            ParentPath          = $StartingPath
-                            Strategy            = $Strategy
-                            ReferenceHashtable  = $mergedItem
-                            DifferenceHashtable = $_
-                            ChildStrategies     = $ChildStrategies
-                        }
-                        $mergedItem = Merge-Hashtable @mergeItemsParams
-                    }
-                    # If a diff Item has been used, save it to find the unused ones
-                    $null = $usedOrKnockedOutDiffItems.AddRange($diffItemsToMerge)
-                    $null = $mergedArray.Add($mergedItem)
-                }
-                $unMergedItems = $DifferenceArray | ForEach-Object {
-                    if (-not $usedOrKnockedOutDiffItems.Contains($_))
-                    {
-                        ([ordered]@{} + $_)
-                    }
-                }
-                if ($null -ne $unMergedItems)
-                {
-                    if ($unMergedItems -is [System.Array])
-                    {
-                        $null = $mergedArray.AddRange($unMergedItems)
-                    }
-                    else
-                    {
-                        $null = $mergedArray.Add($unMergedItems)
-                    }
-                }
-            }
-
-            # UniqueByProperties
-            '^Unique'
-            {
-                Write-Debug -Message "`t`t`tSelecting Unique Hashes accross both arrays based on Property tuples"
-                # look at each $DiffItems in $DiffArray
-                #   if no PropertyNames defined, use all Properties of $DiffItem
-                #   else use defined PropertyNames
-                #  Search for a RefItem that has the same Property/Value pairs
-                #  if Nothing is found
-                #    add current DiffItem to RefArray
-
-                if (-not $propertyNames)
+                else
                 {
                     Write-Debug -Message "`t`t`t ..No PropertyName defined: Use ReferenceItem Keys"
-                    $propertyNames = $referenceItem.Keys
+                    $referenceItem.Keys
+                }
+                $key = Get-DatumTupleKeyValueString $referenceItem $compareKeys
+                if (-not $seenKeys.ContainsKey($key))
+                {
+                    $seenKeys[$key] = $true
+                    $mergedArray.Add($referenceItem)
+                }
+            }
+
+            # Process difference items, skipping knockouts and duplicates
+            foreach ($differenceItem in $DifferenceArray)
+            {
+                # Make sure property values are converted before comparing
+                foreach ($prop in $tupleKeys)
+                {
+                    if ($differenceItem.Contains($prop))
+                    {
+                        if (Invoke-DatumHandler -InputObject $differenceItem[$prop] -DatumHandlers $Datum.__Definition.DatumHandlers -Result ([ref]$result))
+                        {
+                            $differenceItem[$prop] = ConvertTo-Datum -InputObject $result -DatumHandlers $Datum.__Definition.DatumHandlers
+                        }
+                    }
                 }
 
-                $mergedArray = [System.Collections.ArrayList]::new()
-                $ReferenceArray | ForEach-Object {
-                    $currentRefItem = [ordered]@{} + $_
-                    # make sure property values are converted before merge
-                    $result = $null
-                    foreach ($prop in $propertyNames)
+                # Check if this item should be knocked out
+                $shouldKnockout = $false
+                foreach ($knockoutReferenceItem in $knockoutReferenceItems)
+                {
+                    if (Test-DatumKnockout -DiffItem $differenceItem -RefKnockoutItem $knockoutReferenceItem -KnockoutPrefixMatcher $knockoutPrefixMatcher)
                     {
-                        if ($currentRefItem.Contains($prop))
-                        {
-                            if (Invoke-DatumHandler -InputObject $currentRefItem.$prop -DatumHandlers $Datum.__Definition.DatumHandlers -Result ([ref]$result))
-                            {
-                                $currentRefItem.$prop = ConvertTo-Datum -InputObject $result -DatumHandlers $Datum.__Definition.DatumHandlers
-                            }
-                        }
-                    }
-                    if (-not ($mergedArray.Where{ -not (Compare-Hashtable -Property $propertyNames -ReferenceHashtable $currentRefItem -DifferenceHashtable $_ ) }))
-                    {
-                        $null = $mergedArray.Add(([ordered]@{} + $_))
+                        $shouldKnockout = $true
+                        break
                     }
                 }
+                if ($shouldKnockout)
+                {
+                    continue
+                }
 
-                $DifferenceArray | ForEach-Object {
-                    $currentDiffItem = [ordered]@{} + $_
-                    # make sure property values are converted before merge
-                    $result = $null
-                    foreach ($prop in $propertyNames)
-                    {
-                        if ($currentDiffItem.Contains($prop))
-                        {
-                            if (Invoke-DatumHandler -InputObject $currentDiffItem.$prop -DatumHandlers $Datum.__Definition.DatumHandlers -Result ([ref]$result))
-                            {
-                                $currentDiffItem.$prop = ConvertTo-Datum -InputObject $result -DatumHandlers $Datum.__Definition.DatumHandlers
-                            }
-                        }
-                    }
-                    $itemKnockedOut = $false
-                    foreach ($knockedOutTupleKeyValue in $knockedOutTupleKeyValues)
-                    {
-                        $filterStrings = foreach ($knockedOutTupleKeyValueKey in $knockedOutTupleKeyValue.Keys)
-                        {
-                            "`$knockedOutTupleKeyValue.'$knockedOutTupleKeyValueKey' -eq `$currentDiffItem.'$knockedOutTupleKeyValueKey'"
-                        }
-                        $filterScript = [scriptblock]::Create($filterStrings -join ' -and ')
-                        if ( &$filterScript )
-                        {
-                            $itemKnockedOut = $true
-                            break
-                        }
-                    }
-                    if ($itemKnockedOut -eq $false)
-                    {
-                        if (-not ($mergedArray.Where{ -not (Compare-Hashtable -Property $propertyNames -ReferenceHashtable $currentDiffItem -DifferenceHashtable $_ ) }))
-                        {
-                            $null = $mergedArray.Add(([ordered]@{} + $_))
-                        }
-                    }
+                $key = Get-DatumTupleKeyValueString $differenceItem $tupleKeys
+                # Only add if not already seen (ensures uniqueness)
+                if (-not $seenKeys.ContainsKey($key))
+                {
+                    $seenKeys[$key] = $true
+                    $mergedArray.Add($differenceItem)
                 }
             }
         }
     }
 
-    return (, $mergedArray)
+    return , $mergedArray
 }

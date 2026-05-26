@@ -39,6 +39,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   evaluate to `$null` or empty strings are now silently skipped
   instead of causing lookup errors.
 - Added knockout support for hashtable array items.
+- Added private function `Get-DatumTupleKeyValueString` for consistent composite key generation
+- Added private function `Test-DatumKnockout` for efficient knockout matching
 
 ### Changed
 
@@ -52,6 +54,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   using an InvokeCommand expression that returns a path for some nodes
   and nothing for others.
 - Updated build pipeline to also test against Linux and MacOS
+- Refactored `Merge-DatumArray` for performance optimization:
+  - Replaced O(n²) nested loop comparisons using `Compare-Hashtable` with O(n+m) hash-based indexing
+  - Pre-computed knockout reference items to avoid repeated checks during merge
+  - Changed output type from `[System.Collections.ArrayList]` to `[System.Collections.Generic.List[object]]`
 
 ### Fixed
 
@@ -75,6 +81,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   property separator under `ResolutionPrecedence` and
   `lookup_options`.
 - Fixed issues running integration tests with PowerShell on Linux.
+
+### Removed
+
+- Removed private function `Compare-Hashtable.ps1` (no longer needed)
 
 ## [0.41.0] - 2026-02-03
 
