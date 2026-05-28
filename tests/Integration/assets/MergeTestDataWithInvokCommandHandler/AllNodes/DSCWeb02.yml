@@ -14,7 +14,7 @@ Configurations:
 
 NetworkIpConfigurationMerged:
   Interfaces:
-    - InterfaceAlias: Ethernet 1
+    - InterfaceAlias: 'Ethernet 1 on DSCWeb02'
       IpAddress: 192.168.10.102
 
 NetworkIpConfigurationNonMerged:

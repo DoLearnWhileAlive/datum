@@ -9,7 +9,7 @@ NetworkIpConfigurationMerged:
   ConfigureIPv6: 2
   --DisableNetBios: null
   Interfaces:
-    - InterfaceAlias: Ethernet 1
+    - InterfaceAlias: Ethernet 1 on DSCWeb01
       IpAddress: 192.168.10.101
       --Gateway: null
       Destination:

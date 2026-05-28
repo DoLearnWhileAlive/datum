@@ -10,7 +10,7 @@ NetworkIpConfigurationMerged:
   ConfigureIPv6: 0
   DisableNetBios: true
   Interfaces:
-    - InterfaceAlias: Ethernet 1
+    - InterfaceAlias: '[x={ "Ethernet 1 on $($Node.Name)" }=]'
       Prefix: 24
       Gateway: 192.168.10.50
       DnsServer: 192.168.10.10
@@ -22,14 +22,15 @@ NetworkIpConfigurationMerged:
         - 192.168.40.0/24
         - 192.168.50.0/24
         - 192.168.60.0/24
-    - InterfaceAlias: Ethernet 2
+        - '[x={ "192.168.{0}0.0/24" -f $Node.Name.Length }=]'
+    - InterfaceAlias: '[x={ "Ethernet 2 on $($Node.Name)" }=]'
       Prefix: 24
       Gateway: 192.168.20.50
       DnsServer:
         - 192.168.20.10
         - 192.168.20.11
       DisableNetbios: true
-    - InterfaceAlias: '[x={ "Ethernet 3" }=]'
+    - InterfaceAlias: '[x={ "Ethernet 3 on $($Node.Name)" }=]'
       Prefix: 24
       Gateway: 192.168.30.50
       DnsServer:

@@ -14,7 +14,7 @@ FilesAndFolders:
 NetworkIpConfigurationMerged:
   ConfigureIPv6: -1
   Interfaces:
-    - InterfaceAlias: Ethernet 1
+    - InterfaceAlias: '[x={ "Ethernet 1 on $($Node.Name)" }=]'
       Prefix: 24
       Gateway: 192.168.10.50
       DnsServer: 192.168.10.10

@@ -55,18 +55,18 @@ Describe "RSOP tests based on 'MergeTestDataWithInvokCommandHandler' test data" 
             }
             @{
                 Node         = 'DSCFile01'
-                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet 1"}.Destination'
-                Value        = '192.168.11.0/24', '192.168.22.0/24', '192.168.33.0/24', '192.168.10.0/24', '192.168.20.0/24', '192.168.30.0/24', '192.168.40.0/24', '192.168.50.0/24', '192.168.60.0/24'
+                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet 1 on DSCFile01"}.Destination'
+                Value        = '192.168.11.0/24', '192.168.22.0/24', '192.168.33.0/24', '192.168.10.0/24', '192.168.20.0/24', '192.168.30.0/24', '192.168.40.0/24', '192.168.50.0/24', '192.168.60.0/24', '192.168.90.0/24'
             }
             @{
                 Node         = 'DSCWeb01'
-                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet 1"}.Destination'
-                Value        = '192.168.12.0/24', '192.168.23.0/24', '192.168.34.0/24', '192.168.40.0/24', '192.168.50.0/24', '192.168.60.0/24'
+                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet 1 on DSCWeb01"}.Destination'
+                Value        = '192.168.12.0/24', '192.168.23.0/24', '192.168.34.0/24', '192.168.40.0/24', '192.168.50.0/24', '192.168.60.0/24', '192.168.80.0/24'
             }
             @{
                 Node         = 'DSCWeb02'
-                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet 1"}.Destination'
-                Value        = '192.168.12.0/24', '192.168.23.0/24', '192.168.34.0/24', '192.168.10.0/24', '192.168.20.0/24', '192.168.30.0/24', '192.168.40.0/24', '192.168.50.0/24', '192.168.60.0/24'
+                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet 1 on DSCWeb02"}.Destination'
+                Value        = '192.168.12.0/24', '192.168.23.0/24', '192.168.34.0/24', '192.168.10.0/24', '192.168.20.0/24', '192.168.30.0/24', '192.168.40.0/24', '192.168.50.0/24', '192.168.60.0/24', '192.168.80.0/24'
             }
             @{
                 Node         = 'DSCFile01'
@@ -107,39 +107,39 @@ Describe "RSOP tests based on 'MergeTestDataWithInvokCommandHandler' test data" 
             #DSCFile01
             @{
                 Node         = 'DSCFile01'
-                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet 1"}.IpAddress'
+                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet 1 on DSCFile01"}.IpAddress'
                 Value        = '192.168.10.100'
             }
             @{
                 Node         = 'DSCFile01'
-                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet 1"}.Gateway'
+                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet 1 on DSCFile01"}.Gateway'
                 Value        = '192.168.10.50'
             }
 
             @{
                 Node         = 'DSCFile01'
-                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet 2"}.IpAddress'
+                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet 2 on DSCFile01"}.IpAddress'
                 Value        = '192.168.20.100'
             }
             @{
                 Node         = 'DSCFile01'
-                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet 2"}.Gateway'
+                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet 2 on DSCFile01"}.Gateway'
                 Value        = '192.168.20.50'
             }
 
             @{
                 Node         = 'DSCFile01'
-                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet 3"}.IpAddress'
+                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet 3 on DSCFile01"}.IpAddress'
                 Value        = '192.168.30.100'
             }
             @{
                 Node         = 'DSCFile01'
-                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet 3"}.Gateway'
+                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet 3 on DSCFile01"}.Gateway'
                 Value        = '192.168.30.1'
             }
             @{
                 Node         = 'DSCFile01'
-                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet 3"}.DnsServer'
+                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet 3 on DSCFile01"}.DnsServer'
                 Value        = '192.168.30.10', '192.168.30.20'
             }
             @{
@@ -151,23 +151,35 @@ Describe "RSOP tests based on 'MergeTestDataWithInvokCommandHandler' test data" 
             #DSCWeb01
             @{
                 Node         = 'DSCWeb01'
-                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet 1"}.IpAddress'
+                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet 1 on DSCWeb01"}.IpAddress'
                 Value        = '192.168.10.101'
             }
             @{
                 Node         = 'DSCWeb01'
-                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet 1"}.Gateway'
+                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet 1 on DSCWeb01"}.Gateway'
                 Value        = $null
             }
             @{
+                Node         = 'DSCWeb01'
+                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Count'
+                Value        = '3'
+            }
+
+            #DSCWeb02
+            @{
                 Node         = 'DSCWeb02'
-                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet 1"}.IpAddress'
+                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet 1 on DSCWeb02"}.IpAddress'
                 Value        = '192.168.10.102'
             }
             @{
                 Node         = 'DSCWeb02'
-                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet 1"}.Gateway'
+                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Where{$_.InterfaceAlias -eq "Ethernet 1 on DSCWeb02"}.Gateway'
                 Value        = '192.168.10.50'
+            }
+            @{
+                Node         = 'DSCWeb02'
+                PropertyPath = 'NetworkIpConfigurationMerged.Interfaces.Count'
+                Value        = '3'
             }
         )
 

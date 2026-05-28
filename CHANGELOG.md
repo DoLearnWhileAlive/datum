@@ -58,7 +58,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Replaced O(n²) nested loop comparisons using `Compare-Hashtable` with O(n+m) hash-based indexing
   - Pre-computed knockout reference items to avoid repeated checks during merge
   - Changed output type from `[System.Collections.ArrayList]` to `[System.Collections.Generic.List[object]]`
-
+  - Updated RsopWithInvokCommandHandler integration tests to ensure also
+    node specific Datum handler values from lower layers are merged
+    correctly.
 ### Fixed
 
 - Fix `ConvertTo-Json` truncation warnings for deep data structures
