@@ -133,12 +133,6 @@ tests/
 - **DscWorkshopConfigData**: Full hierarchy with ProtectedData credentials + domain join
 - **Demo3**: Node1, Node2, Node3 — simple role merge + `$false` value test
 
-### Known Skipped Tests (3 tests)
-All in `RsopWithInvokCommandHandler.tests.ps1`, tagged with "There is a bug in the merge logic":
-- Ethernet 3 Gateway for DSCFile01
-- Ethernet 3 DnsServer for DSCFile01
-- Interface Count for DSCFile01
-
 ## Build System
 - **Sampler-based**: Uses the Sampler module for build/test/publish pipeline
 - **ModuleBuilder**: Merges source files into single module output
