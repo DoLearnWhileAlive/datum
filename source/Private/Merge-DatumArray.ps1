@@ -60,6 +60,50 @@ function Merge-DatumArray
 
     Write-Debug -Message "`t`tMERGING Array of Hashtables"
 
+    $ReferenceArray = @(
+        foreach ($referenceItem in $ReferenceArray)
+        {
+            # Shallow copy reference items to avoid converted tuple key values
+            # land in original DatumTree. Otherwise follow-up nodes merge the
+            # same tuple key values as the first node.
+            $clonedReferenceItem = [ordered]@{} + $referenceItem
+            foreach ($prop in $tupleKeys)
+            {
+                if ($clonedReferenceItem.Contains($prop))
+                {
+                    # Make sure property values are converted before comparing
+                    if (Invoke-DatumHandler -InputObject $clonedReferenceItem[$prop] -DatumHandlers $Datum.__Definition.DatumHandlers -Result ([ref]$result))
+                    {
+                        $clonedReferenceItem[$prop] = ConvertTo-Datum -InputObject $result -DatumHandlers $Datum.__Definition.DatumHandlers
+                    }
+                }
+            }
+            $clonedReferenceItem
+        }
+    )
+
+    $DifferenceArray = @(
+        foreach ($differenceItem in $DifferenceArray)
+        {
+            # Shallow copy difference items to avoid converted tuple key values
+            # land in original DatumTree. Otherwise follow-up nodes merge the
+            # same tuple key values as the first node.
+            $clonedDifferenceItem = [ordered]@{} + $differenceItem
+            foreach ($prop in $tupleKeys)
+            {
+                if ($clonedDifferenceItem.Contains($prop))
+                {
+                    # Make sure property values are converted before comparing
+                    if (Invoke-DatumHandler -InputObject $clonedDifferenceItem[$prop] -DatumHandlers $Datum.__Definition.DatumHandlers -Result ([ref]$result))
+                    {
+                        $clonedDifferenceItem[$prop] = ConvertTo-Datum -InputObject $result -DatumHandlers $Datum.__Definition.DatumHandlers
+                    }
+                }
+            }
+            $clonedDifferenceItem
+        }
+    )
+
     # Precompute knockout regex for identifying knockout-prefixed values
     $knockoutPrefixMatcher = if ($Strategy.merge_options.knockout_prefix)
     {
@@ -82,12 +126,6 @@ function Merge-DatumArray
             {
                 if ($referenceItem.Contains($prop))
                 {
-                    # Make sure property values are converted before comparing
-                    if (Invoke-DatumHandler -InputObject $referenceItem[$prop] -DatumHandlers $Datum.__Definition.DatumHandlers -Result ([ref]$result))
-                    {
-                        $referenceItem[$prop] = ConvertTo-Datum -InputObject $result -DatumHandlers $Datum.__Definition.DatumHandlers
-                    }
-
                     if ($knockoutPrefixMatcher)
                     {
                         if ($referenceItem[$prop] -match $knockoutPrefixMatcher)
@@ -129,17 +167,6 @@ function Merge-DatumArray
             $diffIndex = @{}
             foreach ($differenceItem in $DifferenceArray)
             {
-                # Make sure property values are converted before comparing
-                foreach ($prop in $tupleKeys)
-                {
-                    if ($differenceItem.Contains($prop))
-                    {
-                        if (Invoke-DatumHandler -InputObject $differenceItem[$prop] -DatumHandlers $Datum.__Definition.DatumHandlers -Result ([ref]$result))
-                        {
-                            $differenceItem[$prop] = ConvertTo-Datum -InputObject $result -DatumHandlers $Datum.__Definition.DatumHandlers
-                        }
-                    }
-                }
                 $key = Get-DatumTupleKeyValueString $differenceItem $tupleKeys
                 $diffIndex[$key] = $differenceItem
             }
@@ -241,18 +268,6 @@ function Merge-DatumArray
             # Process difference items, skipping knockouts and duplicates
             foreach ($differenceItem in $DifferenceArray)
             {
-                # Make sure property values are converted before comparing
-                foreach ($prop in $tupleKeys)
-                {
-                    if ($differenceItem.Contains($prop))
-                    {
-                        if (Invoke-DatumHandler -InputObject $differenceItem[$prop] -DatumHandlers $Datum.__Definition.DatumHandlers -Result ([ref]$result))
-                        {
-                            $differenceItem[$prop] = ConvertTo-Datum -InputObject $result -DatumHandlers $Datum.__Definition.DatumHandlers
-                        }
-                    }
-                }
-
                 # Check if this item should be knocked out
                 $shouldKnockout = $false
                 foreach ($knockoutReferenceItem in $knockoutReferenceItems)
