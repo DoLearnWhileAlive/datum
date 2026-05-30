@@ -61,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated RsopWithInvokCommandHandler integration tests to ensure also
     node specific Datum handler values from lower layers are merged
     correctly.
+
 ### Fixed
 
 - Fix `ConvertTo-Json` truncation warnings for deep data structures
@@ -83,6 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   property separator under `ResolutionPrecedence` and
   `lookup_options`.
 - Fixed issues running integration tests with PowerShell on Linux.
+- Fixed build issue with latest ModuleBuilder version by pinning to v3.1.8
 
 ### Removed
 
